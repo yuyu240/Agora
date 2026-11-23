@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ágora – jogo de filosofia</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Figtree:wght@400;600&display=swap">
+<style>
+:root{--bg:#eef1f2;--card:#fff;--ink:#14233a;--mute:#5a6a7e;--line:#cfd7de;--acc:#1f4e9c;--accT:#fff;--ok:#2f7a4b;--bad:#b3402f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1b2d;--card:#172740;--ink:#e8edf2;--mute:#9db0c6;--line:#2b3f5e;--acc:#7fa8e8;--accT:#0f1b2d;--ok:#6fcf97;--bad:#f08a78;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1b2d;--card:#172740;--ink:#e8edf2;--mute:#9db0c6;--line:#2b3f5e;--acc:#7fa8e8;--accT:#0f1b2d;--ok:#6fcf97;--bad:#f08a78;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 Figtree,system-ui,sans-serif;min-height:100vh}
+main{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+h1,h2{font-family:Newsreader,Georgia,serif;font-weight:600;line-height:1.1;margin:0}
+h1{font-size:clamp(3.6rem,17vw,6rem);letter-spacing:-.02em}
+h2{font-size:1.65rem;line-height:1.25}
+.sub{color:var(--mute);margin:14px 0 32px;max-width:34ch;font-family:Newsreader,Georgia,serif;font-size:1.25rem;font-style:italic}
+.mode{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px;font:inherit;cursor:pointer}
+.mode b{display:block;font-family:Newsreader,Georgia,serif;font-size:1.4rem}
+.mode span{color:var(--mute);font-size:.95rem}
+.mode:hover,.opt:hover{border-color:var(--acc)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.bar{display:flex;justify-content:space-between;align-items:center;color:var(--mute);font-size:.95rem;margin-bottom:22px}
+.prog{height:4px;background:var(--line);border-radius:4px;margin-bottom:26px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.ctx{color:var(--mute);margin:10px 0 22px}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;font:inherit;cursor:pointer}
+.opt.ok{border-color:var(--ok);box-shadow:inset 4px 0 0 var(--ok)}
+.opt.bad{border-color:var(--bad);box-shadow:inset 4px 0 0 var(--bad)}
+.opt:disabled{cursor:default}
+.fb{margin:18px 0;padding:14px 16px;border-left:4px solid var(--acc);background:var(--card);border-radius:0 10px 10px 0}
+.btn{background:var(--acc);color:var(--accT);border:0;border-radius:10px;padding:13px 22px;font:600 1rem Figtree,sans-serif;cursor:pointer}
+.ghost{background:none;color:var(--mute);border:0;font:inherit;cursor:pointer;padding:8px 0;text-decoration:underline}
+.res{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin:20px 0}
+.res h2{font-size:2rem}
+.meter{margin:10px 0}
+.meter div{display:flex;justify-content:space-between;font-size:.92rem}
+.meter i{display:block;height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:4px}
+.meter i b{display:block;height:100%;background:var(--acc)}
+.hide{display:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+var ESC={
+est:{n:"Estoicismo",t:"Você foca no que depende de você e encara o resto com serenidade. Zenão de Cítio, Epicteto e Marco Aurélio caminhariam ao seu lado."},
+uti:{n:"Utilitarismo",t:"Você julga pelas consequências: o melhor ato é o que gera mais bem-estar para o maior número de pessoas. Pense em Jeremy Bentham e John Stuart Mill."},
+kan:{n:"Ética do dever (Kant)",t:"Você acredita que há regras que valem para todos, sem exceções convenientes, e que pessoas nunca devem ser tratadas só como meio."},
+exi:{n:"Existencialismo",t:"Você leva a liberdade a sério: não há roteiro pronto, e cada escolha define quem você é. Sartre e Simone de Beauvoir reconheceriam esse espírito."},
+epi:{n:"Epicurismo",t:"Você busca uma vida tranquila, com amizades, simplicidade e ausência de perturbação. Epicuro chamaria isso de prazer verdadeiro."}};
+var DIL=[
+{c:"Um bonde desgovernado vai atropelar cinco pessoas. Você pode puxar uma alavanca e desviá-lo para um trilho onde há uma pessoa.",o:[["Puxo. Cinco vidas pesam mais que uma.","uti"],["Não puxo. Não posso usar alguém como instrumento.","kan"],["Escolho e assumo toda a responsabilidade, sem me esconder atrás de regras.","exi"],["Faço o que está ao meu alcance e mantenho a calma, sem me culpar pelo que não controlo.","est"]]},
+{c:"Você encontra uma carteira com muito dinheiro e os documentos do dono.",o:[["Devolvo. É meu dever, mesmo que ninguém saiba.","kan"],["Devolvo. O dono sofre mais com a perda do que eu ganho com o dinheiro.","uti"],["Devolvo. Viver com culpa e medo de ser descoberto não compensa.","epi"],["Devolvo, porque é isso que escolho ser.","exi"]]},
+{c:"Seu emprego dos sonhos exige trabalhar até tarde todos os dias. O salário é ótimo, mas sobra pouco tempo para amigos e descanso.",o:[["Recuso. Boas companhias e tempo livre valem mais que status.","epi"],["Aceito se isso me permitir ajudar muita gente.","uti"],["Aceito ou recuso, mas sem culpar as circunstâncias. A decisão é minha.","exi"],["Aceito e treino não depender de elogios nem de conforto.","est"]]},
+{c:"Um amigo pede que você minta para protegê-lo de uma bronca merecida.",o:[["Não minto. Se mentir fosse regra geral, ninguém confiaria em ninguém.","kan"],["Minto, se o resultado for menos sofrimento no total.","uti"],["Falo a verdade com cuidado e aceito como ele reagir.","est"],["Ajudo-o a assumir o erro. Uma amizade honesta traz paz.","epi"]]},
+{c:"Você perde tudo num incêndio: casa, objetos, planos.",o:[["Recomeço. Sou o que faço a partir daqui.","exi"],["Lembro que o essencial, minha virtude e meu juízo, continua comigo.","est"],["Busco apoio dos amigos e uma vida simples e segura.","epi"],["Peço ajuda e também ajudo outros atingidos, onde o impacto for maior.","uti"]]}];
+var QUI=[
+{q:"Quem ficou conhecido por conversar com as pessoas fazendo perguntas, método que provoca reflexão?",o:["Aristóteles","Sócrates","Heráclito"],a:1,e:"Sócrates (470–399 a.C.) usava a ironia e a maiêutica para levar o interlocutor a examinar suas próprias ideias."},
+{q:"Prisioneiros acorrentados só veem sombras numa parede. Qual filósofo criou essa alegoria?",o:["Platão","Descartes","Hume"],a:0,e:"É a alegoria da caverna, no livro A República, de Platão."},
+{q:"“Penso, logo existo” é a base do raciocínio de qual pensador?",o:["Kant","Espinosa","Descartes"],a:2,e:"René Descartes buscou uma certeza que resistisse à dúvida e a encontrou no próprio ato de pensar."},
+{q:"Agir segundo uma regra que você gostaria que valesse para todos. Essa é a ideia central de:",o:["Nietzsche","Kant","Epicuro"],a:1,e:"É o imperativo categórico de Immanuel Kant."},
+{q:"“A existência precede a essência” resume o pensamento de qual filósofo?",o:["Jean-Paul Sartre","Platão","Santo Agostinho"],a:0,e:"Para Sartre, primeiro existimos e depois nos definimos por nossas escolhas."},
+{q:"Quem propôs a ideia do Übermensch (“além-homem”) em Assim falou Zaratustra?",o:["Schopenhauer","Hegel","Nietzsche"],a:2,e:"Friedrich Nietzsche usou a imagem para falar de criar os próprios valores."},
+{q:"Quem escreveu O Segundo Sexo, obra marcante do feminismo e do existencialismo?",o:["Hannah Arendt","Simone de Beauvoir","Simone Weil"],a:1,e:"Simone de Beauvoir (1949) analisou como a sociedade constrói o que significa “ser mulher”."},
+{q:"Quem defendia que o prazer maior é a ausência de dor e de inquietação?",o:["Epicuro","Zenão de Cítio","Diógenes"],a:0,e:"Epicuro valorizava amizade, simplicidade e tranquilidade da alma (ataraxia)."},
+{q:"Quem disse que o ser humano é um “animal político”?",o:["Maquiavel","Hobbes","Aristóteles"],a:2,e:"Aristóteles via a vida em comunidade como parte da natureza humana."}];
+var app=document.getElementById("app"),S={};
+function h(s){app.innerHTML=s;window.scrollTo(0,0)}
+function home(){h('<h1>Ágora</h1><p class="sub">Pense, escolha e descubra que filósofo mora em você.</p>'+
+'<button class="mode" onclick="startD()"><b>Dilemas</b><span>5 situações difíceis. No fim, descubra sua escola de pensamento.</span></button>'+
+'<button class="mode" onclick="startQ()"><b>Desafio dos Pensadores</b><span>9 perguntas, 3 vidas. Quanto você sabe sobre grandes ideias?</span></button>')}
+function startD(){S={i:0,p:{est:0,uti:0,kan:0,exi:0,epi:0}};dil()}
+function dil(){var d=DIL[S.i];
+h('<div class="bar"><span>Dilema '+(S.i+1)+' de '+DIL.length+'</span><button class="ghost" onclick="home()">Sair</button></div><div class="prog"><i style="width:'+(S.i/DIL.length*100)+'%"></i></div><h2>'+d.c+'</h2><p class="ctx">O que você faria?</p>'+
+d.o.map(function(x,k){return '<button class="opt" onclick="pick('+k+')">'+x[0]+'</button>'}).join(''))}
+function pick(k){S.p[DIL[S.i].o[k][1]]++;S.i++;S.i<DIL.length?dil():resD()}
+function resD(){var m=Object.keys(S.p).sort(function(a,b){return S.p[b]-S.p[a]}),w=m[0];
+h('<p class="ctx">Seu resultado</p><div class="res"><h2>'+ESC[w].n+'</h2><p>'+ESC[w].t+'</p></div>'+
+m.map(function(k){return '<div class="meter"><div><span>'+ESC[k].n+'</span><span>'+S.p[k]+'/'+DIL.length+'</span></div><i><b style="width:'+S.p[k]/DIL.length*100+'%"></b></i></div>'}).join('')+
+'<p class="ctx">Nenhuma escola é “certa”: o objetivo é perceber como você pensa. Tente de novo com outras respostas.</p><button class="btn" onclick="startD()">Jogar de novo</button> <button class="ghost" onclick="home()">Início</button>')}
+function startQ(){S={i:0,v:3,s:0};qui()}
+function hearts(){return '♥'.repeat(S.v)+'♡'.repeat(3-S.v)}
+function qui(){var d=QUI[S.i];
+h('<div class="bar"><span>Pergunta '+(S.i+1)+' de '+QUI.length+' · '+S.s+' pts</span><span aria-label="'+S.v+' vidas">'+hearts()+'</span></div><div class="prog"><i style="width:'+(S.i/QUI.length*100)+'%"></i></div><h2>'+d.q+'</h2><p class="ctx"></p><div id="os">'+
+d.o.map(function(x,k){return '<button class="opt" onclick="ans('+k+')">'+x+'</button>'}).join('')+'</div><div id="fb"></div>')}
+function ans(k){var d=QUI[S.i],b=document.querySelectorAll("#os .opt"),ok=k===d.a;
+b.forEach(function(x,j){x.disabled=true;if(j===d.a)x.classList.add("ok");else if(j===k)x.classList.add("bad")});
+if(ok)S.s+=10;else S.v--;
+var end=S.v<=0||S.i===QUI.length-1;
+document.getElementById("fb").innerHTML='<div class="fb"><b>'+(ok?'Correto! +10 pontos':'Não foi dessa vez.')+'</b><br>'+d.e+'</div><button class="btn" onclick="nxt()">'+(end?'Ver resultado':'Próxima')+'</button>'}
+function nxt(){S.i++;if(S.v<=0||S.i>=QUI.length)resQ();else qui()}
+function resQ(){var won=S.v>0,t=S.s>=80?"Mestre da Academia":S.s>=50?"Discípulo dedicado":"Aprendiz curioso";
+h('<p class="ctx">'+(won?'Você chegou ao fim!':'Suas vidas acabaram.')+'</p><div class="res"><h2>'+t+'</h2><p>'+S.s+' pontos de '+QUI.length*10+'. Vidas restantes: '+hearts()+'</p></div><button class="btn" onclick="startQ()">Jogar de novo</button> <button class="ghost" onclick="home()">Início</button>')}
+home();
+</script>
+</body>
+</html>
